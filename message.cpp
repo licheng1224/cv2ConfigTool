@@ -20,7 +20,10 @@ const char CRC8Table[]={
     116, 42, 200, 150, 21, 75, 169, 247, 182, 232, 10, 84, 215, 137, 107, 53
 };
 const char SEND_FLAG = 0xAA;
+const char RECV_FLAG = 0xBB;
 const char ENTER_TEST_MODE = 0x81;
+const char GET_NORDIC_SOFTVER = 0x02;
+const char GET_NORDIC_SN = 0x83;
 
 message::message()
 {
@@ -41,16 +44,6 @@ char message::CRC8(const char *p, int counter)
     }
     return(crc8);
 }
-
-//char message::CRC8_1(QByteArray ba)
-//{
-//    char crc8 = 0;
-//    for(int i = 0; i < ba.size(); i++)
-//    {
-//        crc8 = CRC8TableArray.at(crc8^ba.at(i));
-//        qDebug("crc8=%x,*p=%x", (unsigned char)crc8, (unsigned char)crc8^ba.at(i);
-//    }
-//}
 
 QByteArray message::GetMessageByType(const char* type, int len)
 {
@@ -90,6 +83,16 @@ QByteArray message::PackEnterTestMode()
 //    }
 }
 
+QByteArray message::PackGetNordicSoftVer()
+{
+    return GetMessageByType(&GET_NORDIC_SOFTVER, 1);
+}
+
+QByteArray message::PackGetNordicSN()
+{
+    return GetMessageByType(&GET_NORDIC_SN, 1);
+}
+
 bool message::IsReplyPacket(QByteArray ba)
 {
     if(ba.size() != 32)
@@ -108,7 +111,8 @@ bool message::IsReplyPacket(QByteArray ba)
 //    }
     char *buf = ba.data();
     int len = ba.size();
-    if((unsigned char)buf[0] != 0xBB)
+//    qDebug("(unsigned char)buf[0]=%x", (unsigned char)buf[0]);
+    if((unsigned char)buf[0] != (RECV_FLAG&0xff))
     {
         qDebug() << "recv data not begin with 0xBB";
         return false;
@@ -124,8 +128,7 @@ bool message::IsReplyPacket(QByteArray ba)
 
  bool message::IsEnterTestMode(QByteArray reply)
  {
-     char *buf = reply.data();
-     if(IsReplyPacket(reply) && (unsigned char)buf[1] == 0x82)
+     if(IsReplyPacket(reply) && reply.at(1) == ENTER_TEST_MODE)
      {
           qDebug() << "IsEnterTestMode ok";
          return true;
@@ -136,3 +139,32 @@ bool message::IsReplyPacket(QByteArray ba)
          return false;
      }
  }
+
+ bool message::GetNordicSoftVerFromData(QByteArray reply, QString& s)
+ {
+     if(!IsReplyPacket(reply) && reply.at(1) == GET_NORDIC_SOFTVER)
+     {
+         qDebug() << "GetNordicSoftVerFromData fail";
+         return false;
+     }
+     QByteArray ba= reply.mid(2, 6);
+     qDebug() << "ba:" << ba.toHex();
+     s = ba;
+     qDebug() << "s:" << s;
+     return true;
+ }
+
+ bool message::GetNordicSNFromData(QByteArray reply, QString& s)
+ {
+     if(!IsReplyPacket(reply) && reply.at(1) == GET_NORDIC_SN)
+     {
+         qDebug() << "GetNordicSNFromData fail";
+         return false;
+     }
+     QByteArray ba= reply.mid(2, 17);
+     qDebug() << "ba:" << ba.toHex();
+     s = ba;
+     qDebug() << "s:" << s;
+     return true;
+ }
+

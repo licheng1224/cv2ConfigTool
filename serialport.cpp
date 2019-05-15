@@ -1,8 +1,10 @@
 #include "serialport.h"
 //#include <synchapi.h>
-#include <windows.h>
+//#include <windows.h>
 #include <QTime>
 #include <QCoreApplication>
+
+#define SERIALDELAY 100
 
 SerialPort::SerialPort()
 {
@@ -185,71 +187,71 @@ void SerialPort::UpdateStatus()
     }
 }
 
-QByteArray SerialPort::GetOnePacket(int timeout)
-{
-    int t = 0;
-    while(1)
-    {
-        Sleep(50);
-        t += 50;
-        if(t > timeout)
-            break;
-        if(msg->IsReplyPacket(recvBuf))
-        {
-            return recvBuf;
-        }
-    }
-    return NULL;
-}
+//QByteArray SerialPort::GetOnePacket(int timeout)
+//{
+//    int t = 0;
+//    while(1)
+//    {
+//        Sleep(50);
+//        t += 50;
+//        if(t > timeout)
+//            break;
+//        if(msg->IsReplyPacket(recvBuf))
+//        {
+//            return recvBuf;
+//        }
+//    }
+//    return NULL;
+//}
 
-char ConvertHexChar(char ch)
-{
-    if((ch >= '0') && (ch <= '9'))
-        return ch-0x30;
-    else if((ch >= 'A') && (ch <= 'F'))
-        return ch-'A'+10;
-    else if((ch >= 'a') && (ch <= 'f'))
-        return ch-'a'+10;
-    else return ch-ch;//不在0-f范围内的会发送成0
-}
-bool StringToHex(QString str, QByteArray &data)
-{
-    int hexdata,lowhexdata;
-    int hexdatalen = 0;
-    int len = str.length();
-    data.resize(len/2);
-    char lstr,hstr;
+//char ConvertHexChar(char ch)
+//{
+//    if((ch >= '0') && (ch <= '9'))
+//        return ch-0x30;
+//    else if((ch >= 'A') && (ch <= 'F'))
+//        return ch-'A'+10;
+//    else if((ch >= 'a') && (ch <= 'f'))
+//        return ch-'a'+10;
+//    else return ch-ch;//不在0-f范围内的会发送成0
+//}
+//bool StringToHex(QString str, QByteArray &data)
+//{
+//    int hexdata,lowhexdata;
+//    int hexdatalen = 0;
+//    int len = str.length();
+//    data.resize(len/2);
+//    char lstr,hstr;
 
-    for(int i=0; i<len; )
-    {
-        //char lstr,
-        hstr=str[i].toLatin1();
-        if(hstr == ' ')
-        {
-            i++;
-            continue;
-        }
-        i++;
-        if(i >= len)
-            break;
-        lstr = str[i].toLatin1();
-        hexdata = ConvertHexChar(hstr);
-        lowhexdata = ConvertHexChar(lstr);
-        if((hexdata == 16) || (lowhexdata == 16))
-            break;
-        else
-            hexdata = hexdata*16+lowhexdata;
-        i++;
-        data[hexdatalen] = (char)hexdata;
-        hexdatalen++;
-        qDebug("data:%x,", hexdata);
-    }
-    data.resize(hexdatalen);
-    if(hexdatalen == 0)
-        return false;
-    else
-        return true;
-}
+//    for(int i=0; i<len; )
+//    {
+//        //char lstr,
+//        hstr=str[i].toLatin1();
+//        if(hstr == ' ')
+//        {
+//            i++;
+//            continue;
+//        }
+//        i++;
+//        if(i >= len)
+//            break;
+//        lstr = str[i].toLatin1();
+//        hexdata = ConvertHexChar(hstr);
+//        lowhexdata = ConvertHexChar(lstr);
+//        if((hexdata == 16) || (lowhexdata == 16))
+//            break;
+//        else
+//            hexdata = hexdata*16+lowhexdata;
+//        i++;
+//        data[hexdatalen] = (char)hexdata;
+//        hexdatalen++;
+//        qDebug("data:%x,", hexdata);
+//    }
+//    data.resize(hexdatalen);
+//    if(hexdatalen == 0)
+//        return false;
+//    else
+//        return true;
+//}
 
 void sleep(unsigned int msec)
 {
@@ -264,11 +266,11 @@ bool SerialPort::EnterTestMode()
     {
         return false;
     }
-    sleep(100);
-    if(!msg->IsReplyPacket(recvBuf))
-    {
-        return false;
-    }
+    sleep(SERIALDELAY);
+//    if(!msg->IsReplyPacket(recvBuf))
+//    {
+//        return false;
+//    }
     if(msg->IsEnterTestMode(recvBuf))
     {
         qDebug() << "EnterTestMode ok";
@@ -280,6 +282,50 @@ bool SerialPort::EnterTestMode()
         qDebug() << "EnterTestMode fail";
         CleanRecvBuf();
         return false;
+    }
+}
+
+QString SerialPort::GetNordicSoftVer()
+{
+    QString Ver;
+    if(!SendCmd(msg->PackGetNordicSoftVer()))
+    {
+        return NULL;
+    }
+    sleep(SERIALDELAY);
+    if(msg->GetNordicSoftVerFromData(recvBuf, Ver))
+    {
+        qDebug() << "GetNordicSoftVer ok";
+        CleanRecvBuf();
+        return Ver;
+    }
+    else
+    {
+        qDebug() << "GetNordicSoftVer fail";
+        CleanRecvBuf();
+        return NULL;
+    }
+}
+
+QString SerialPort::GetNordicsSN()
+{
+    QString SN;
+    if(!SendCmd(msg->PackGetNordicSN()))
+    {
+        return NULL;
+    }
+    sleep(SERIALDELAY);
+    if(msg->GetNordicSNFromData(recvBuf, SN))
+    {
+        qDebug() << "GetNordicSN ok";
+        CleanRecvBuf();
+        return SN;
+    }
+    else
+    {
+        qDebug() << "GetNordicSN fail";
+        CleanRecvBuf();
+        return NULL;
     }
 }
 

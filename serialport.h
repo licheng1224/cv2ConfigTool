@@ -22,6 +22,8 @@ public:
     bool SendCmd(QByteArray);
     QStringList getSerialNames();
     bool EnterTestMode();
+    QString GetNordicSoftVer();
+    QString GetNordicsSN();
 public slots:
     void ReceiveInfo();
     void SerialError(QSerialPort::SerialPortError error);
@@ -37,7 +39,7 @@ private:
     bool PortIsAvailable(QString);
     QString SerialScan();
     bool OpenSerial(QString);
-    QByteArray GetOnePacket(int timeout);
+//    QByteArray GetOnePacket(int timeout);
     void CleanRecvBuf();
     const QString cv2SerialName= "nRF52 USB CDC BLE Demo";
 //    const QString cv2SerialName="Qualcomm HS-USB Android GPS 9018";

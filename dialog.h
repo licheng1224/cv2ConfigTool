@@ -48,6 +48,7 @@ private:
     QLabel *testModeLabel;
     QLabel *MCUSoftVerLabel;
     QLabel *MCUHardVerLabel;
+    QLabel *MCUSNLabel;
     QLabel *BTAddrLabel;
     QLabel *IMUChipIDLabel;
     bool StringToHex(QString str, QByteArray &data);

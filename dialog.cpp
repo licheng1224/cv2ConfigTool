@@ -16,6 +16,8 @@ Dialog::Dialog(QWidget *parent) :
     part2HLayout = new QHBoxLayout(this);
     part3HLayout = new QHBoxLayout(this);
     serialStatusLayout = new QVBoxLayout(this);
+    nordicStatusLayout = new QVBoxLayout(this);
+    realTimeLayout = new QVBoxLayout(this);
     testModeLayout = new QHBoxLayout(this);
     realTimeLayout = new QVBoxLayout(this);
 
@@ -24,6 +26,10 @@ Dialog::Dialog(QWidget *parent) :
     part1HLayout->setStretchFactor(serialStatusLayout, 1);
     part1HLayout->addLayout(realTimeLayout);
     part1HLayout->setStretchFactor(realTimeLayout, 4);
+    part2HLayout->addLayout(nordicStatusLayout);
+    part2HLayout->setStretchFactor(nordicStatusLayout, 1);
+    part2HLayout->addLayout(realTimeLayout);
+    part2HLayout->setStretchFactor(realTimeLayout, 2);
     mainVLayout->addLayout(part1HLayout);
     mainVLayout->addLayout(part2HLayout);
     mainVLayout->addLayout(part3HLayout);
@@ -45,6 +51,15 @@ Dialog::Dialog(QWidget *parent) :
     serialStatusLayout->addWidget(versionLabel);
     serialStatusLayout->addWidget(SerialPortStatusLabel);
     serialStatusLayout->addLayout(testModeLayout);
+
+    MCUSoftVerLabel = new QLabel("nordic-software-version:");
+    MCUHardVerLabel = new QLabel("nordic-hardware-version:");
+    BTAddrLabel = new QLabel("nordic-bluetooth-addr:");
+    MCUSNLabel = new QLabel("nordic-SN:");
+    nordicStatusLayout->addWidget(MCUSoftVerLabel);
+    nordicStatusLayout->addWidget(MCUHardVerLabel);
+    nordicStatusLayout->addWidget(BTAddrLabel);
+    nordicStatusLayout->addWidget(MCUSNLabel);
 
     SPort = new SerialPort();
     connect(SPort, SIGNAL(UpdateSerialData(QByteArray)), this, SLOT(UpdateEdit(QByteArray)));
@@ -150,10 +165,6 @@ void Dialog::CV2SerialOpened()
 
 void Dialog::enterTestModeBtnClicked()
 {
-//    QByteArray testBa;
-//     StringToHex(QString("aa 81 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
-//                         "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"), testBa);
-//    SPort->SendCmd(testBa);
     if(SPort->EnterTestMode())
     {
         enterTestModeBtn->setEnabled(false);
@@ -163,6 +174,24 @@ void Dialog::enterTestModeBtnClicked()
     {
         enterTestModeBtn->setEnabled(true);
         testModeLabel->setText("fail");
+    }
+    QString softVer = SPort->GetNordicSoftVer();
+    if(softVer == NULL)
+    {
+        qDebug() << "GetNordicSoftVer fail";
+    }
+    else
+    {
+        MCUSoftVerLabel->setText("nordic-software-version:"+softVer);
+    }
+    QString sn = SPort->GetNordicsSN();
+    if(sn == NULL)
+    {
+        qDebug() << "GetNordicsSN fail";
+    }
+    else
+    {
+        MCUSNLabel->setText("nordic-SN:"+sn);
     }
 }
 
